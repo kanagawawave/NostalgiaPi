@@ -62,8 +62,8 @@ def main():
 
     # Start playback & go fullscreen
     manager.start_playback()
-    time.sleep(1)
-    manager.set_fullscreen(True)
+    # time.sleep(1)
+    # manager.set_fullscreen(True)
 
     # Keep alive so MPV events fire
     try:
@@ -71,7 +71,7 @@ def main():
             time.sleep(1)
     except KeyboardInterrupt:
         manager.stop_playback()
-        manager.set_fullscreen(False)
+        # manager.set_fullscreen(False)
 
 if __name__ == "__main__":
     main()
