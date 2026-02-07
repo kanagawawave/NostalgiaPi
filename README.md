@@ -1,3 +1,17 @@
+This fork use MPV isntaed of VLC.
+As much i love VLC, i cant make my filters work using python. MPV is much more versatile and im happy with the final result.
+Example: with this filter we can normalize the audio. Some files are to loud and others are to quiet. 
+
+```lavfi=[pan=stereo|c0=FC+LFE+FL+BL+SL|c1=FC+LFE+FR+BR+SR,loudnorm=I=-14:LRA=1:tp=-1:linear=false:dual_mono=true]```
+
+DO NOT EXPECT SUPPORT
+Im not a programmer. Most of the changes made in this repo was done using a LLM, my approach was:
+
+Maintain the code simple as possible;
+Avoid messing too much in the original codebase;
+
+I tried to understand the changes proposed by the LLM checking docs and questions found online.
+
 # Nostalgia Pi
 
 Nostalgia Pi aims to replicate cable TV of old, on a Raspberry Pi. It relies on nothing external, can be completely offline and is totally self sufficient.
@@ -43,7 +57,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\morningshows"],
       "ads": ["c:\\Videos\\morningads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.9
+	    "bumper_chance": 0.9,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "afternoon": {
 	    "comment": "afternoon shows",
@@ -58,7 +74,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\afternoonshows"],
       "ads": ["c:\\Videos\\afternoonads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.9
+	    "bumper_chance": 0.9,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "teatime": {
 	    "comment": "teatime, cartoons and shows",
@@ -72,8 +90,10 @@ both config files are the same, the only real difference is the paths for window
 	    "endminute": 0,
       "shows": ["c:\\Videos\\eveningshows"],
       "ads": ["c:\\Videos\\eveningads"],
-	  "bumpers": ["c:\\Videos\\bumpers"],
-	  "bumper_chance": 0.7
+	    "bumpers": ["c:\\Videos\\bumpers"],
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "lateevening": {
 	    "comment": "usually movies but can be other shows too",
@@ -88,7 +108,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\lateeveningshows"],
       "ads": ["c:\\Videos\\lateeveningads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.1
+	    "bumper_chance": 0.1,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "night": {
 	    "comment": "dead of the night, who knows what is here? twlight zone episodes?",
@@ -103,7 +125,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\nightshows"],
       "ads": ["c:\\Videos\\nightads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.7
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "halloween": {
 	  "comment": "spooky season, lots of horror themed shows & movies",
@@ -118,7 +142,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\halloweenshows"],
       "ads": ["c:\\Videos\\halloweenads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.7
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "xmas": {
 	    "comment": "Christmas!! loads of christmas movies",
@@ -133,7 +159,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\xmasshows"],
       "ads": ["c:\\Videos\\xmasads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.7
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "valentines": {
 	    "comment": "valentines day, plenty of rom coms",
@@ -148,7 +176,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\valentinesshows"],
       "ads": ["c:\\Videos\\valentinesads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.7
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "newyears": {
 	    "comment": "new years day",
@@ -163,7 +193,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\newyearsshows"],
       "ads": ["c:\\Videos\\newyearsads"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.7
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     },
     "classicscifimonth": {
 	    "comment": "August is 50s/60s classic Sci-Fi month",
@@ -178,7 +210,9 @@ both config files are the same, the only real difference is the paths for window
       "shows": ["c:\\Videos\\classicscifi"],
       "ads": ["c:\\Videos\\ads-50s60s"],
 	    "bumpers": ["c:\\Videos\\bumpers"],
-	    "bumper_chance": 0.7
+	    "bumper_chance": 0.7,
+      "ads_min": "1",
+      "ads_max": "2"
     }
   },
   "system": {
@@ -188,10 +222,17 @@ both config files are the same, the only real difference is the paths for window
 	"create_debug_file": false,
     "webuiport": 8080,
 	"channel_name": "90s overload",
+  "mpv_options": {
+      "fullscreen": true,
+      "input_default_bindings": true,
+      "input_vo_keyboard": true,
+      "osc": true,
+      "af": "lavfi=[pan=stereo|c0=FC+LFE+FL+BL+SL|c1=FC+LFE+FR+BR+SR,loudnorm=I=-14:LRA=1:tp=-1:linear=false:dual_mono=true]"
+  },
 	"peers": [
       {
-        "name": "Living Room",
-        "url": "http://192.168.1.1:8080/queued"
+        "name": "Self-Tracking",
+        "url": "http://localhost:8080/queued"
       },
 	  {
         "name": "Kitchen",
@@ -205,6 +246,10 @@ both config files are the same, the only real difference is the paths for window
   }
 }
 ```
+You can define options and scripts for mpv. Check [MPV Manual](https://mpv.io/manual/stable/#options) and [Here](https://github.com/jaseg/python-mpv/issues/276) for scripts.
+
+If you are on windows and need the DLL, download it [HERE](https://github.com/shinchiro/mpv-winbuild-cmake/releases) or in the oficial MPV website https://mpv.io/installation/.
+
 The "action" property under system can be restart (which restarts the script) or shutdown, which shuts the pi down
 
 Multiple Pis can be used together to create multiple channels, the schedule viewer on the web interface will dynamically display any number of channels

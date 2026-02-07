@@ -1,67 +1,53 @@
 import os
-import vlc
 import logging
-import urllib.parse
 from tracker import PlayedTracker
 from models import Config
 from datetime import datetime
+import mpv
 
 class PlaylistManager:
     """
-    Wraps VLC MediaListPlayer, tracks (file and category) so we can mark
-    played items via VLCs MediaPlayerEndReached event.
+    Wraps MPV player, tracks (file and category) so we can mark
+    played items via MPV's end-file event.
     """
     def __init__(self, config: Config, tracker: PlayedTracker):
         logging.debug("Init PlaylistManager")
         self.config = config            # store config so we can use it later
         self.tracker = tracker          # store tracker
-        logging.debug("Create VLC instance")
-        self.instance = vlc.Instance()  # create vlc instance
+        logging.debug("Create MPV instance")
+        mpv_opts = config.system.mpv_options or {}
+        logging.debug(f"MPV options from config: {mpv_opts}")
+        self.instance = mpv.MPV(**mpv_opts)
 
-        self.media_list = self.instance.media_list_new()
-        self.list_player = self.instance.media_list_player_new()
-        self.list_player.set_media_list(self.media_list)
+        # Playlist to track files and categories
+        self.playlist = []
+        self.current_index = 0
 
-        # map MRL to category
-        self.category_by_mrl: dict[str, str] = {}
+        # map file path to category
+        self.category_by_path: dict[str, str] = {}
 
         # attach end event
-        logging.debug("Setup VLC Event for MediaPlayerEndReached")
-        mp = self.list_player.get_media_player()
-        em = mp.event_manager()
-        em.event_attach(vlc.EventType.MediaPlayerEndReached, self.on_media_end)
+        logging.debug("Setup MPV Event for end-file")
+        @self.instance.event_callback('end-file')
+        def on_end_file(event):
+            self.on_media_end(event)
 
     def on_media_end(self, event):
 
         logging.debug("Begin on_media_end")
-        mp = self.list_player.get_media_player()
-        media = mp.get_media()
-        if not media:
+        
+        if self.current_index >= len(self.playlist):
             return
-
-        mrl = media.get_mrl()  # e.g., file:///path/to/video.mp4
-        logging.debug(f"mrl is: {mrl}")
-        category = self.category_by_mrl.get(mrl)  # e.g., "shows", "ads", "bumpers"
+        
+        path = self.playlist[self.current_index]
+        logging.debug(f"path is: {path}")
+        
+        category = self.category_by_path.get(path)
         logging.debug(f"category is: {category}")
 
-        # Convert MRL to OS path
-        path = mrl
-        logging.debug(f"path is: {path}")
-        if mrl.startswith("file://"):
-            logging.debug(f"mrl starts with file://")
-            raw = mrl.replace("file:///", "", 1)
-            logging.debug(f"raw is: {raw}")
-            raw = urllib.parse.unquote(raw)  # decode %20 → space
-            logging.debug(f"raw is: {raw}")
-
-            if os.name == "nt":
-                raw = raw.replace("/", "\\")
-                logging.debug(f"OS is {os.name}, raw is: {raw}")
-            path = os.path.normpath(raw)
-            logging.debug(f"path is {path}")
-        else:
-            logging.debug(f"mrl doesnt start with file://")
-            path = mrl
+        # Normalize path
+        path = os.path.normpath(path)
+        logging.debug(f"path is {path}")
 
         # Determine active schedule at the current time
         now = datetime.now()
@@ -81,30 +67,34 @@ class PlaylistManager:
             self.tracker.mark_played(schedule_name, path, category)
         else:
             logging.debug(f"Finished: {path} (unknown category)")
+        
+        # Move to next item
+        self.current_index += 1
+        if self.current_index < len(self.playlist):
+            next_file = self.playlist[self.current_index]
+            self.instance.play(next_file)
 
     def add_to_playlist(self, file_path: str, category: str):
         logging.debug(f"Begin add_to_playlist")
-        media = self.instance.media_new_path(file_path)
-        mrl = media.get_mrl()
-        self.media_list.add_media(media)
-        self.category_by_mrl[mrl] = category
-        logging.debug(f"{file_path} ({category}) added to playlist, total items: {self.media_list.count()}")
+        self.playlist.append(file_path)
+        self.category_by_path[file_path] = category
+        logging.debug(f"{file_path} ({category}) added to playlist, total items: {len(self.playlist)}")
 
     def start_playback(self):
         logging.debug(f"Begin start_playback")
-        if self.media_list.count() == 0:
+        if len(self.playlist) == 0:
             logging.debug("Playlist empty! returning")
             return
-        self.list_player.play()
+        self.current_index = 0
+        self.instance.play(self.playlist[0])
         logging.debug("Playback started")
 
     def stop_playback(self):
         logging.debug(f"Begin stop_playback")
-        self.list_player.stop()
+        self.instance.stop()
         logging.debug("Playback stopped")
 
-    def set_fullscreen(self, enable: bool):
-        logging.debug(f"Begin set_fullscreen")
-        mp = self.list_player.get_media_player()
-        mp.set_fullscreen(enable)
-        logging.debug(f"Fullscreen set to {enable}")
+    # def set_fullscreen(self, enable: bool):
+    #     logging.debug(f"Begin set_fullscreen")
+    #     self.instance.fullscreen = enable
+    #     logging.debug(f"Fullscreen set to {enable}")

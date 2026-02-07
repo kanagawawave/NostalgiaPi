@@ -55,7 +55,7 @@ def main():
         print("[INFO] Nothing fits before restart. Exiting.")
         return
 
-    # Create VLC manager, add planned items with categories
+    # Create MPV manager, add planned items with categories
     manager = PlaylistManager(config, tracker)
     for file_path, category in plan:
         manager.add_to_playlist(file_path, category)
@@ -65,7 +65,7 @@ def main():
     time.sleep(1)
     manager.set_fullscreen(True)
 
-    # Keep alive so VLC events fire
+    # Keep alive so MPV events fire
     try:
         while True:
             time.sleep(1)
