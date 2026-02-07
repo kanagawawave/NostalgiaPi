@@ -39,21 +39,23 @@ class Schedule:
             ads_max=data["ads_max"]
         )
 
-    def is_active(self, hour: int, weekday: int, day: int, month: int) -> bool:
+    def is_active(self, hour: int, minute: int, weekday: int, day: int, month: int) -> bool:
         # hour window (supports wrap past midnight)
-        start = self.starthour
-        end = self.endhour
+        start = self.starthour * 60 + self.startminute
+        end = self.endhour * 60 + self.endminute
+        current = hour * 60 + minute
+        
         if start == end:
             logging.debug(f"Schedule runs for 24 hours")
             within_hour = True  # This schedule runs for 24 hours
             logging.debug(f"24 hour window active, start={start}, end={end} ")
         elif start < end:
             logging.debug(f"Schedule runs between {start} and {end} on same day")
-            within_hour = start <= hour < end
-            logging.debug(f"within_hour {within_hour}, start={start}, hour={hour} end={end} ")
+            within_hour = start <= current < end
+            logging.debug(f"within_hour {within_hour}, start={start}, hour={current} end={end} ")
         else:
             logging.debug(f"Schedule runs between {start} and {end} and crosses midnight")
-            within_hour = (hour >= start) or (hour < end)
+            within_hour = (current >= start) or (current < end)
 
         logging.debug(f"within_hour {within_hour}")
         within_days_of_week = (0 in self.daysofweek) or (weekday in self.daysofweek)
@@ -97,6 +99,7 @@ class Config:
             s for s in self.schedules.values()
             if s.is_active(
                 hour=when.hour,
+                minute=when.minute,
                 weekday=(when.weekday() + 1),  # datetime: 0=Mon..6=Sun, we use 1-7 as 0 is any day
                 day=when.day,
                 month=when.month

@@ -57,7 +57,8 @@ def wait_for_restart(system: System):
             # Soft restart of the script
             logging.debug("Time reached. Restarting script now...")
             python = sys.executable
-            os.execv(python, [python] + sys.argv)
+            subprocess.Popen([python] + sys.argv)
+            os._exit(0)  # Exit current process cleanly
 
         elif system.action == "shutdown":
             # Shutdown the Pi
